@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<deployment>
+   <cluster hostcount="3" sitesperhost="8" kfactor="1" />
+   <paths>
+      <voltdbroot path="/tmp/voltdb"/>
+   </paths>
+   <httpd enabled="true">
+      <jsonapi enabled="true" />
+   </httpd>
+</deployment>
