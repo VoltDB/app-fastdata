@@ -40,7 +40,6 @@ CREATE TABLE events
 );
 PARTITION TABLE events ON COLUMN src;
 
-CREATE INDEX event_src_index ON events (src, ts);
 CREATE INDEX event_ts_index ON events (ts);
 
 -- export events
@@ -57,6 +56,17 @@ CREATE TABLE events_export
 EXPORT TABLE events_export;
 
 -- Agg views
+CREATE VIEW events_sessions
+(
+  src,
+  dest,
+  counts,
+  last_ts
+)
+AS SELECT src, dest, COUNT(*), MAX(ts)
+   FROM events
+   GROUP BY src, dest;
+
 CREATE VIEW events_by_second
 (
   second_ts,
@@ -104,13 +114,13 @@ IMPORT CLASS events.Utils;
 CREATE PROCEDURE GetTopDests AS
 SELECT dests.url AS url, SUM(count_values) AS counts
 FROM dests_by_second, dests
-WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, second_ts) + ?) >= TRUNCATE(SECOND, NOW) AND dest = dests.id
+WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, NOW) - ?) <= second_ts AND dest = dests.id
 GROUP BY url
 ORDER BY counts DESC, url LIMIT ?;
 
 CREATE PROCEDURE GetEventsByCluster AS
 SELECT cluster, SUM(count_values) AS counts
 FROM events_by_cluster
-WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, second_ts) + ?) >= TRUNCATE(SECOND, NOW)
+WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, NOW) - ?) <= second_ts
 GROUP BY cluster
 ORDER BY cluster;

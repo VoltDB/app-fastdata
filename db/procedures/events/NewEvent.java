@@ -37,6 +37,10 @@ public class NewEvent extends VoltProcedure {
             "SELECT id FROM agents WHERE name = ?;"
     );
 
+    final SQLStmt checkSession = new SQLStmt(
+            "SELECT last_ts FROM events_sessions WHERE src = ? AND dest = ? AND TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, ?) - 30) <= last_ts;"
+    );
+
     final SQLStmt insertEvent = new SQLStmt(
             "INSERT INTO events (src, dest, method, ts, size, referral, agent, cluster) VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
 
@@ -56,14 +60,19 @@ public class NewEvent extends VoltProcedure {
         final int agentId = (int) batchResult[2].asScalarLong();
 
         voltQueueSQL(getCluster, EXPECT_ZERO_OR_ONE_ROW, src, destId, referralId, agentId);
-        final VoltTable clusterResult = voltExecuteSQL()[0];
+        voltQueueSQL(checkSession, src, destId, ts);
+        final VoltTable[] secondResult = voltExecuteSQL();
+        final VoltTable clusterResult = secondResult[0];
         Integer cluster = null;
         if (clusterResult.advanceRow()) {
             cluster = (int) clusterResult.getLong("id");
         }
+        final boolean hasExported = secondResult[1].advanceRow();
 
         voltQueueSQL(insertEvent, EXPECT_SCALAR_LONG, src, destId, method, ts, size, referralId, agentId, cluster);
-        voltQueueSQL(exportEvent, EXPECT_SCALAR_LONG, src, destId, method, ts, size, referralId, agentId);
+        if (!hasExported) {
+            voltQueueSQL(exportEvent, EXPECT_SCALAR_LONG, src, destId, method, ts, size, referralId, agentId);
+        }
         voltExecuteSQL(true);
 
         return cluster == null ? -1 : cluster;

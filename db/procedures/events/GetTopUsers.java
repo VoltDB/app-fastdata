@@ -29,7 +29,7 @@ public class GetTopUsers extends VoltProcedure {
     final SQLStmt getTopSecond = new SQLStmt(
             "SELECT src, SUM(count_values) AS counts " +
             "FROM events_by_second " +
-            "WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, second_ts) + ?) >= TRUNCATE(SECOND, NOW) " +
+            "WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, NOW) - ?) <= second_ts " +
             "GROUP BY src " +
             "ORDER BY counts DESC, src LIMIT ?;"
     );
