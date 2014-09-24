@@ -36,16 +36,38 @@
     </div>
 
     <div class="container">
+      <div class="row">
+        <p>The Fast Data app simulates real-time click stream clustering. The
+        click events are generated with random data at a constant rate. Each
+        click event contains basic information like source IP address,
+        destination URL, timestamp, HTTP method name, referral URL, and the user
+        agent string. More information can be included in a real-world use
+        case.</p>
+        <p>The stream is ingested into VoltDB, cleaned up, then exported into a
+        data warehouse for long term persistence. The data warehouse runs
+        machine learning algorithm on the full historical dataset to segment the
+        click events into clusters periodically. Each cluster is represented by
+        its center. The cluster centers are sent back into VoltDB.</p>
+        <p>VoltDB uses the clustering information to further segment new click
+        events into the corresponding cluster at real-time. VoltDB can use this
+        to make per-event real-time decisions like what advertisement to show a
+        user, or whether a user should be blocked for spamming.</p>
+      </div>
 
       <!-- flot chart -->
       <div class="row">
         <div class="col-md-8">
-          <h4>Cluster Distribution in the Past Minute</h4>
+          <h4>Cluster Distribution in Past Minute</h4>
           <div id="events_chart" style="height:200px;"></div>
         </div>
         <div class="col-md-4">
           <br><br>
-          <div id="time" class="pull-right"></div>
+          <p>The chart to the left shows the number of real-time events in each
+          cluster in the past minute. As events are streamed into VoltDB, they
+          are assigned to clusters based on the shortest Euclidean distances to
+          the cluster centers. The cluster centers are calculated on the entire
+          dataset in the data warehouse periodically, then the centers are fed
+          back into VoltDB.</p>
         </div>
       </div>
 

@@ -102,12 +102,3 @@ function DrawTable(response, tableName) {
 
     } catch(x) {}
 }
-
-function startTime() {
-    document.getElementById('time').innerHTML = "Current Time: " + new Date().toUTCString();
-    // repeat every 500ms
-    var t = setTimeout(function () {
-        startTime();
-    }, 500);
-}
-startTime();
