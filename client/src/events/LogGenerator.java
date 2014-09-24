@@ -28,7 +28,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class LogGenerator {
     private final Config config;
@@ -42,16 +41,10 @@ public class LogGenerator {
     private final ClientStatsContext periodicStatsContext;
     private Timer timer;
     private long benchmarkStartTS;
-    private final AtomicLong generatedFloods = new AtomicLong(0);
-    private final AtomicLong detectedFloods = new AtomicLong(0);
 
     static class Config extends CLIConfig {
         @Option(desc = "Interval for performance feedback, in seconds.")
         long displayinterval = 5;
-
-        @Option(desc = "Maximum number of events from the same source in a second. " +
-                       "Rate higher than this will be considered a flood.")
-        int maxeventspersec = 1000;
 
         @Option(desc = "Duration, in seconds.")
         int duration = 1800;
@@ -73,7 +66,6 @@ public class LogGenerator {
         {
             if (duration <= 0) exitWithMessageAndUsage("duration must be > 0");
             if (ratelimit <= 0) exitWithMessageAndUsage("ratelimit must be > 0");
-            if (maxeventspersec <= 0) exitWithMessageAndUsage("maxeventspersec must be > 0");
         }
     }
 
@@ -83,8 +75,6 @@ public class LogGenerator {
         {
             if (response.getStatus() != ClientResponse.SUCCESS) {
                 System.err.println("Error: " + response.getStatusString());
-            } else if (response.getResults()[0].asScalarLong() == 1) {
-                detectedFloods.incrementAndGet();
             }
         }
     }
@@ -221,14 +211,10 @@ public class LogGenerator {
         ClientStats stats = periodicStatsContext.fetchAndResetBaseline().getStats();
         long time = Math.round((stats.getEndTimestamp() - benchmarkStartTS) / 1000.0);
 
-        long generated = generatedFloods.getAndSet(0);
-        long detected = detectedFloods.getAndSet(0);
-
         System.out.printf("%02d:%02d:%02d ", time / 3600, (time / 60) % 60, time % 60);
         System.out.printf("Throughput %d/s, ", stats.getTxnThroughput());
-        System.out.printf("Aborts/Failures %d/%d, ",
+        System.out.printf("Aborts/Failures %d/%d",
                 stats.getInvocationAborts(), stats.getInvocationErrors());
-        System.out.printf("Floods generated/detected %d/%d", generated, detected);
         System.out.printf("\n");
     }
 
@@ -248,42 +234,16 @@ public class LogGenerator {
         final EventCallback callback = new EventCallback();
         schedulePeriodicStats();
 
-        int srcIp = 0;
-        String dest;
-        String referral;
-        long size;
-        long floodBatchSize = 0;
-
         while (System.currentTimeMillis() < endTs) {
-            size = Math.abs(rand.nextInt());
-
-            // Find the destination based on their probabilities
-            dest = urls.get(rand.nextInt(urls.size()));
-            referral = rand.nextBoolean() ? "" : urls.get(rand.nextInt(urls.size()));
-
-            if (floodBatchSize == 0) {
-                srcIp = nextIp();
-
-                if (rand.nextDouble() > 0.999) {
-                    generatedFloods.incrementAndGet();
-                    // 0.1% chance of flooding
-                    floodBatchSize = config.maxeventspersec + rand.nextInt(config.maxeventspersec);
-                }
-            } else {
-                // Still generating flood packets, don't change the source IP.
-                floodBatchSize--;
-            }
-
             client.callProcedure(callback,
                     "NewEvent",
-                    srcIp,
-                    dest,
+                    nextIp(),
+                    urls.get(rand.nextInt(urls.size())),
                     "GET",
                     System.currentTimeMillis() * 1000, // microseconds
-                    size,
-                    referral,
-                    agents.get(rand.nextInt(agents.size())),
-                    config.maxeventspersec);
+                    Math.abs(rand.nextInt()),
+                    rand.nextBoolean() ? "" : urls.get(rand.nextInt(urls.size())),
+                    agents.get(rand.nextInt(agents.size())));
         }
 
         timer.cancel();

@@ -43,12 +43,6 @@ PARTITION TABLE events ON COLUMN src;
 CREATE INDEX event_src_index ON events (src, ts);
 CREATE INDEX event_ts_index ON events (ts);
 
-CREATE TABLE attackers
-(
-  src integer NOT NULL,
-  CONSTRAINT attacker_pkey PRIMARY KEY (src)
-);
-
 -- export events
 CREATE TABLE events_export
 (
@@ -94,23 +88,6 @@ AS SELECT TRUNCATE(SECOND, ts), cluster, COUNT(*)
    WHERE cluster IS NOT NULL
    GROUP BY TRUNCATE(SECOND, ts), cluster;
 
-CREATE TABLE alerts
-(
-  src  integer   NOT NULL,
-  ts   timestamp NOT NULL,
-  CONSTRAINT alerts_pkey PRIMARY KEY (src, ts)
-);
-PARTITION TABLE alerts ON COLUMN src;
-
-CREATE VIEW alerts_by_second
-(
-  ts,
-  counts
-)
-AS SELECT TRUNCATE(SECOND, ts), COUNT(*)
-   FROM alerts
-   GROUP BY TRUNCATE(SECOND, ts);
-
 -- stored procedures
 CREATE PROCEDURE FROM CLASS events.DeleteAfterDate;
 PARTITION PROCEDURE DeleteAfterDate ON TABLE events COLUMN src;
@@ -130,12 +107,6 @@ FROM dests_by_second, dests
 WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, second_ts) + ?) >= TRUNCATE(SECOND, NOW) AND dest = dests.id
 GROUP BY url
 ORDER BY counts DESC, url LIMIT ?;
-
-CREATE PROCEDURE GetAlertsPerSec AS
-SELECT ts, counts
-FROM alerts_by_second
-WHERE ts >= TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, NOW) - ?)
-ORDER BY ts;
 
 CREATE PROCEDURE GetEventsByCluster AS
 SELECT cluster, SUM(count_values) AS counts
