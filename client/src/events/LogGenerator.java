@@ -21,13 +21,7 @@ package events;
 import au.com.bytecode.opencsv_voltpatches.CSVReader;
 import org.voltcore.utils.Pair;
 import org.voltdb.CLIConfig;
-import org.voltdb.client.Client;
-import org.voltdb.client.ClientConfig;
-import org.voltdb.client.ClientFactory;
-import org.voltdb.client.ClientResponse;
-import org.voltdb.client.ClientStats;
-import org.voltdb.client.ClientStatsContext;
-import org.voltdb.client.ProcedureCallback;
+import org.voltdb.client.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -41,7 +35,7 @@ public class LogGenerator {
     private final Client client;
 
     private final List<Pair<Integer, Integer>> ipRanges = new ArrayList<>();
-    private final TreeMap<Double, String> urls = new TreeMap<>();
+    private final List<String> urls = new ArrayList<>();
     private final List<String> agents = new ArrayList<>();
 
     private final Random rand;
@@ -111,26 +105,32 @@ public class LogGenerator {
         return range.getFirst() + rand.nextInt(range.getSecond() - range.getFirst() + 1);
     }
 
-    private void loadUrls() throws IOException
+    private void loadUrls() throws IOException, InterruptedException
     {
-        final CSVReader reader = new CSVReader(new FileReader("data/urls.csv"));
-        double chance = 0.0;
-        String[] line;
-        while ((line = reader.readNext()) != null) {
-            chance += Double.parseDouble(line[1]);
-            urls.put(chance, line[0]);
+        final BufferedReader reader = new BufferedReader(new FileReader("data/urls.txt"));
+        String line;
+        int i = 0;
+        while ((line = reader.readLine()) != null) {
+            urls.add(line);
+            client.callProcedure(new NullCallback(), "DESTS.insert", i++, line);
         }
         reader.close();
+
+        client.callProcedure(new NullCallback(), "DESTS.insert", i, "");
+        client.drain();
     }
 
-    private void loadAgents() throws IOException
+    private void loadAgents() throws IOException, InterruptedException
     {
         final BufferedReader reader = new BufferedReader(new FileReader("data/agents.txt"));
         String line;
+        int i = 0;
         while ((line = reader.readLine()) != null) {
             agents.add(line);
+            client.callProcedure(new NullCallback(), "AGENTS.insert", i++, line);
         }
         reader.close();
+        client.drain();
     }
 
     public LogGenerator(Config config) throws IOException {
@@ -258,8 +258,8 @@ public class LogGenerator {
             size = Math.abs(rand.nextInt());
 
             // Find the destination based on their probabilities
-            dest = urls.ceilingEntry(rand.nextDouble()).getValue();
-            referral = rand.nextBoolean() ? "" : urls.ceilingEntry(rand.nextDouble()).getValue();
+            dest = urls.get(rand.nextInt(urls.size()));
+            referral = rand.nextBoolean() ? "" : urls.get(rand.nextInt(urls.size()));
 
             if (floodBatchSize == 0) {
                 srcIp = nextIp();

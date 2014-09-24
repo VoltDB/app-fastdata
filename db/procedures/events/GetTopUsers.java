@@ -24,53 +24,26 @@ import org.voltdb.VoltTable;
 import org.voltdb.VoltType;
 
 import java.net.UnknownHostException;
-import java.util.Calendar;
 
 public class GetTopUsers extends VoltProcedure {
     final SQLStmt getTopSecond = new SQLStmt(
-            "SELECT src, second_ts AS ts, count_values AS counts " +
+            "SELECT src, SUM(count_values) AS counts " +
             "FROM events_by_second " +
-            "WHERE second_ts = ? " +
-            "ORDER BY count_values DESC, src LIMIT ?;"
+            "WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, second_ts) + ?) >= TRUNCATE(SECOND, NOW) " +
+            "GROUP BY src " +
+            "ORDER BY counts DESC, src LIMIT ?;"
     );
 
-    final SQLStmt getTopMinute = new SQLStmt(
-            "SELECT src, minute_ts AS ts, count_values AS counts " +
-            "FROM events_by_minute " +
-            "WHERE minute_ts = ? " +
-            "ORDER BY count_values DESC, src LIMIT ?;"
-    );
-
-    public VoltTable run(byte type, int n) throws UnknownHostException
+    public VoltTable run(int seconds, int n) throws UnknownHostException
     {
-        Calendar cal = Calendar.getInstance(); // locale-specific
-        cal.setTime(getTransactionTime());
-        cal.set(Calendar.MILLISECOND, 0);
-        SQLStmt stmt;
-
-        switch (type) {
-        case 0:
-            // second
-            stmt = getTopSecond;
-            break;
-        case 1:
-            // minute
-            cal.set(Calendar.SECOND, 0);
-            stmt = getTopMinute;
-            break;
-        default:
-            throw new VoltAbortException("Unknown type " + type);
-        }
-
-        voltQueueSQL(stmt, cal.getTimeInMillis() * 1000, n);
+        voltQueueSQL(getTopSecond, seconds, n);
         final VoltTable result = voltExecuteSQL(true)[0];
         final VoltTable.ColumnInfo[] schema = result.getTableSchema();
         schema[0] = new VoltTable.ColumnInfo("SRC", VoltType.STRING);
         final VoltTable processed = new VoltTable(schema);
         while (result.advanceRow()) {
             processed.addRow(Utils.itoip((int) result.getLong(0)),
-                    result.getTimestampAsLong(1),
-                    result.getLong(2));
+                    result.getLong(1));
         }
 
         return processed;

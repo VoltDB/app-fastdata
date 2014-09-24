@@ -1,23 +1,23 @@
 // schedule refresh functions to run periodically
 function RefreshData(){
     con.BeginExecute('GetTopUsers',
-                     [1, 10],
+                     [60, 10],
                      function(response) {
                          DrawTable(response,'#table_top_users');
                      }
                     );
 
     con.BeginExecute('GetTopDests',
-                     [1, 10],
+                     [60, 10],
                      function(response) {
                          DrawTable(response,'#table_top_dests');
                      }
                     );
 
-    con.BeginExecute('GetAlertsPerSec',
-                     [120],
+    con.BeginExecute('GetEventsByCluster',
+                     [60],
                      function(response) {
-                         DrawTimeLinesChart(response,'#events_chart');
+                         DrawBarChart(response,'#events_chart');
                      }
                     );
 }
@@ -32,28 +32,32 @@ function RefreshStats() {
 
 }
 
-function DrawTimeLinesChart(response, placeholder) {
+function DrawBarChart(response, placeholder) {
     var tables = response.results;
     var t0 = tables[0];
     var events = [];
-
-    console.log(t0);
+    var tickVals = [];
 
     for(var r=0; r<t0.data.length; r++){ // for each row
-        var time = t0.data[r][0]/1000;
+        var cluster = t0.data[r][0];
         var count = t0.data[r][1];
-        events.push([time, count]);
+        events.push([cluster, count]);
+        tickVals.push(cluster);
     }
-    var eventline = { label: "Events", data: events };
+    var eventline = { data: events };
 
     var options = {
         series: {
-	    lines: { show: true, fill: false },
-	    points: { show: false }
+            bars: {
+                show: true,
+                align: "center"
+            },
+	        points: { show: false }
         },
-        xaxis: { mode: "time", timezone: "browser", minTickSize: [20, "second"], ticks: 10 },
-        yaxis: { position: "right" },
-        legend: { position: 'nw' }
+        xaxis: {
+            ticks: tickVals,
+            tickDecimals: 0
+        }
     };
 
     $.plot($(placeholder), [eventline], options);
