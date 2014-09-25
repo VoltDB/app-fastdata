@@ -41,9 +41,7 @@ The code is divided into projects:
 - "db": the database project, which contains the schema, stored procedures and
   other configurations that are compiled into a catalog and run in a VoltDB
   database.
-
 - "client": a java client that generates click events.
-
 - "web": a simple web server that provides the demo dashboard.
 
 See below for instructions on running these applications.  For any questions,
@@ -64,14 +62,14 @@ Demo Instructions
 -----------------
 
 1. Start the web server
-```bash
-./run.sh start_web
-```
+    ```bash
+    ./run.sh start_web
+    ```
 
 2. Start the database and client
-```bash
-./run.sh demo
-```
+    ```bash
+    ./run.sh demo
+    ```
 
 3. Open a web browser to http://hostname:8081
 
@@ -108,27 +106,27 @@ Instructions for running on a cluster
 Before running this demo on a cluster, make the following changes:
 
 1. On each server, edit the run.sh file to set the HOST variable to the name of
-the **first** server in the cluster:
+   the **first** server in the cluster:
 
     HOST=voltserver01
 
 2. On each server, edit db/deployment.xml to change hostcount from 1 to the
-actual number of servers:
-```
-<cluster hostcount="1" sitesperhost="3" kfactor="0" />
-```
+   actual number of servers:
+    ```
+    <cluster hostcount="1" sitesperhost="3" kfactor="0" />
+    ```
 
 4. On each server, start the database
-```bash
-./run.sh server
-```
+    ```bash
+    ./run.sh server
+    ```
 
 5. On one server, Edit the run.sh script to set the SERVERS variable to a
-comma-separated list of the servers in the cluster
+   comma-separated list of the servers in the cluster
 
     SERVERS=voltserver01,voltserver02,voltserver03
 
 6. Run the client script:
-```bash
-./run.sh client
-```
+    ```bash
+    ./run.sh client
+    ```
