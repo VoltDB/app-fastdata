@@ -61,7 +61,7 @@ LICENSE="$VOLTDB_HOME/voltdb/license.xml"
 function clean() {
     rm -rf voltdbroot statement-plans log catalog-report.html
     rm -f web/http.log web/http.pid
-    rm -rf db/obj db/$APPNAME.jar db/nohup.log
+    rm -rf db/obj db/$APPNAME.jar db/nohup.log db/deployment-demo.xml
     rm -rf client/obj client/log
     rm -rf nibbler/obj nibbler/log nibbler/nohup.log
 }
@@ -194,7 +194,11 @@ function demo-compile() {
 }
 
 function demo() {
+    : ${VERTICAIP:?"Please set the VERTICAIP environment variable to point to the Vertica node"}
     export DEPLOYMENT=deployment-demo.xml
+
+    sed "s,\$VERTICAIP,$VERTICAIP,g" db/deployment-demo.xml.template > db/$DEPLOYMENT
+
     nohup_server
     sleep 10
     echo "starting client..."
