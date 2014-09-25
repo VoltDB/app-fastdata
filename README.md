@@ -50,13 +50,40 @@ please contact fieldengineering@voltdb.com.
 Pre-requisites
 --------------
 
-Before running these scripts you need to have VoltDB 4.7 or later installed, and
-the bin subdirectory should be added to your PATH environment variable.  For
-example, if you installed VoltDB Enterprise 4.7 in your home directory, you
-could add it to the PATH with the following command:
-```bash
-export PATH="$PATH:$HOME/voltdb-ent-4.7/bin"
-```
+1. Before running these scripts you need to have VoltDB 4.7 or later installed,
+   and the bin subdirectory should be added to your PATH environment variable.
+   For example, if you installed VoltDB Enterprise 4.7 in your home directory,
+   you could add it to the PATH with the following command:
+    ```bash
+    export PATH="$PATH:$HOME/voltdb-ent-4.7/bin"
+    ```
+
+1. This example also requires [Vertica](http://www.vertica.com) installed on the
+   same machine or a machine that the VoltDB machine has access to. A Vertica
+   database must be created with the username **dbadmin** with no password. Once
+   Vertica is running, set the environment variable `VERTICAIP` to point to the
+   Vertica machine on the VoltDB machine. For example, if your Vertica is
+   running on 192.168.0.1, run the following command on the VoltDB machine:
+    ```bash
+    export VERTICAIP="192.168.0.1"
+    ```
+
+1. VoltDB uses JDBC to export click events to Vertica. Vertica's JDBC driver
+   must be present in the classpath before starting VoltDB. If your Vertica is
+   installed in `/opt/vertica`, you can find the JDBC driver in
+   `/opt/vertica/java/lib/`. Copy the JAR file in that directory to the VoltDB
+   machine and put it in the `lib/extension` sub-directory in your VoltDB
+   installation.
+
+1. To run the K-means clustering algorithm in Vertica, it requires the R
+   language package to be installed. Please follow the instructions in [Vertica
+   documentation](https://my.vertica.com/docs/7.1.x/HTML/index.htm#Authoring/ProgrammersGuide/UserDefinedFunctions/UDxR/InstallingRForHPVertica.htm)
+   to install the R language pack.
+
+1. Copy the `vertica` sub-directory in the example to the vertica machine. This
+   directory contains Vertica extensions for K-means clustering and loading data
+   back into VoltDB. The following instructions assume that the directory is
+   copied to `/tmp/vertica`.
 
 Demo Instructions
 -----------------
@@ -73,7 +100,14 @@ Demo Instructions
 
 3. Open a web browser to http://hostname:8081
 
-4. To stop the demo:
+4. Run the `updatemodel.sh` script on the Vertica machine to run the K-means
+   clustering algorithm on the data in Vertica. You can run this command
+   periodically to update the cluster model in VoltDB.
+    ```bash
+    /tmp/vertica/updatemodel.sh
+    ```
+
+5. To stop the demo:
 
 Stop the client (if it hasn't already completed) by pressing Ctrl-C
 
