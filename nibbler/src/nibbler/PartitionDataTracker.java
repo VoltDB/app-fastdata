@@ -68,7 +68,7 @@ public class PartitionDataTracker implements Runnable {
 
         try {
             tableStats = app.client.callProcedure("@Statistics", "TABLE").getResults()[0];
-            partitionKeys = app.client.callProcedure("@GetPartitionKeys", "STRING").getResults()[0];
+            partitionKeys = app.client.callProcedure("@GetPartitionKeys", "INTEGER").getResults()[0];
         }
         catch (IOException | ProcCallException e) {
             // Track failures in a simplistic way.
@@ -103,7 +103,7 @@ public class PartitionDataTracker implements Runnable {
                 return;
             }
 
-            pinfo.partitionKey = partitionKeys.getString("PARTITION_KEY");
+            pinfo.partitionKey = partitionKeys.getLong("PARTITION_KEY");
         }
 
         // This is a sanity check to see that every partition has

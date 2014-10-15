@@ -113,7 +113,7 @@ public class Nibbler {
     /////
 
     static final class PartitionInfo {
-        String partitionKey;
+        Long partitionKey;
         long tupleCount;
     }
 
