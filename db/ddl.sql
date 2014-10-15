@@ -41,6 +41,7 @@ CREATE TABLE events
 PARTITION TABLE events ON COLUMN src;
 
 CREATE INDEX event_ts_index ON events (ts);
+CREATE INDEX event_src_dest_index ON events (src, dest);
 
 -- export events
 CREATE TABLE events_export
