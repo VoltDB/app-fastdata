@@ -9,16 +9,18 @@ warehouse for historical analysis. Segmentation information is calculated in
 data warehouse and stored back into VoltDB. VoltDB uses the information to
 segment real-time events for per-event decisioning.
 
-The click events are generated with random data at a constant rate. Each click
-event contains basic information like source IP address, destination URL,
-timestamp, HTTP method name, referral URL, and the user agent string. More
-information can be included in a real-world use case.
+The click events can come from persistent queues like [Apache
+Kafka](http://kafka.apache.org). For simplicity, this sample app generates
+random events at a constant rate. Each click event contains basic information
+like source IP address, destination URL, timestamp, HTTP method name, referral
+URL, and the user agent string. More information can be included in a real-world
+use case.
 
 The stream is ingested into VoltDB, cleaned up, then exported into a data
-warehouse for long term persistence. The data warehouse runs machine learning
-algorithm on the full historical dataset to segment the click events into
-clusters periodically. Each cluster is represented by its center. The cluster
-centers are sent back into VoltDB.
+warehouse like [Hadoop](http://hadoop.apache.org) for long term persistence. The
+data warehouse runs machine learning algorithm on the full historical dataset to
+segment the click events into clusters periodically. Each cluster is represented
+by its center. The cluster centers are sent back into VoltDB.
 
 VoltDB uses the clustering information to further segment new click events into
 the corresponding cluster at real-time. VoltDB can use this to make per-event
