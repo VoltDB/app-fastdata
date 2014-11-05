@@ -29,10 +29,10 @@
       </header>
       <section>
         <h1>
-<a name="voltdb-fast-data-example-app" class="anchor" href="#voltdb-fast-data-example-app"><span class="octicon octicon-link"></span></a>VoltDB Fast Data Example App</h1>
+<a id="voltdb-fast-data-example-app" class="anchor" href="#voltdb-fast-data-example-app" aria-hidden="true"><span class="octicon octicon-link"></span></a>VoltDB Fast Data Example App</h1>
 
 <h2>
-<a name="use-case" class="anchor" href="#use-case"><span class="octicon octicon-link"></span></a>Use Case</h2>
+<a id="use-case" class="anchor" href="#use-case" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use Case</h2>
 
 <p>The Fast Data app simulates real-time click stream processing. Click events are
 ingested into VoltDB at a high rate, then cleaned up and persisted into a data
@@ -40,16 +40,18 @@ warehouse for historical analysis. Segmentation information is calculated in
 data warehouse and stored back into VoltDB. VoltDB uses the information to
 segment real-time events for per-event decisioning.</p>
 
-<p>The click events are generated with random data at a constant rate. Each click
-event contains basic information like source IP address, destination URL,
-timestamp, HTTP method name, referral URL, and the user agent string. More
-information can be included in a real-world use case.</p>
+<p>The click events can come from persistent queues like <a href="http://kafka.apache.org">Apache
+Kafka</a>. For simplicity, this sample app generates
+random events at a constant rate. Each click event contains basic information
+like source IP address, destination URL, timestamp, HTTP method name, referral
+URL, and the user agent string. More information can be included in a real-world
+use case.</p>
 
 <p>The stream is ingested into VoltDB, cleaned up, then exported into a data
-warehouse for long term persistence. The data warehouse runs machine learning
-algorithm on the full historical dataset to segment the click events into
-clusters periodically. Each cluster is represented by its center. The cluster
-centers are sent back into VoltDB.</p>
+warehouse like <a href="http://hadoop.apache.org">Hadoop</a> for long term persistence. The
+data warehouse runs machine learning algorithm on the full historical dataset to
+segment the click events into clusters periodically. Each cluster is represented
+by its center. The cluster centers are sent back into VoltDB.</p>
 
 <p>VoltDB uses the clustering information to further segment new click events into
 the corresponding cluster at real-time. VoltDB can use this to make per-event
@@ -65,7 +67,7 @@ top users and top visited URLs in a moving window. All of these information is
 calculated from materialized views on relevant source tables.</p>
 
 <h2>
-<a name="code-organization" class="anchor" href="#code-organization"><span class="octicon octicon-link"></span></a>Code organization</h2>
+<a id="code-organization" class="anchor" href="#code-organization" aria-hidden="true"><span class="octicon octicon-link"></span></a>Code organization</h2>
 
 <p>The code is divided into projects:</p>
 
@@ -75,11 +77,13 @@ other configurations that are compiled into a catalog and run in a VoltDB
 database.</li>
 <li>"client": a java client that generates click events.</li>
 <li>"web": a simple web server that provides the demo dashboard.</li>
-</ul><p>See below for instructions on running these applications.  For any questions,
+</ul>
+
+<p>See below for instructions on running these applications.  For any questions,
 please contact <a href="mailto:fieldengineering@voltdb.com">fieldengineering@voltdb.com</a>.</p>
 
 <h2>
-<a name="pre-requisites" class="anchor" href="#pre-requisites"><span class="octicon octicon-link"></span></a>Pre-requisites</h2>
+<a id="pre-requisites" class="anchor" href="#pre-requisites" aria-hidden="true"><span class="octicon octicon-link"></span></a>Pre-requisites</h2>
 
 <ol>
 <li>
@@ -88,8 +92,7 @@ and the bin subdirectory should be added to your PATH environment variable.
 For example, if you installed VoltDB Enterprise 4.7 in your home directory,
 you could add it to the PATH with the following command:</p>
 
-<div class="highlight highlight-bash"><pre><span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">"$PATH:$HOME/voltdb-ent-4.7/bin"</span>
-</pre></div>
+<div class="highlight highlight-bash"><pre><span class="k">export</span> PATH=<span class="s2">"<span class="nv">$PATH</span>:<span class="nv">$HOME</span>/voltdb-ent-4.7/bin"</span></pre></div>
 </li>
 <li>
 <p>This example also requires <a href="http://www.vertica.com">Vertica</a> installed on the
@@ -99,8 +102,7 @@ Vertica is running, set the environment variable <code>VERTICAIP</code> to point
 Vertica machine on the VoltDB machine. For example, if your Vertica is
 running on 192.168.0.1, run the following command on the VoltDB machine:</p>
 
-<div class="highlight highlight-bash"><pre><span class="nb">export </span><span class="nv">VERTICAIP</span><span class="o">=</span><span class="s2">"192.168.0.1"</span>
-</pre></div>
+<div class="highlight highlight-bash"><pre><span class="k">export</span> VERTICAIP=<span class="s2">"192.168.0.1"</span></pre></div>
 </li>
 <li><p>VoltDB uses JDBC to export click events to Vertica. Vertica's JDBC driver
 must be present in the classpath before starting VoltDB. If your Vertica is
@@ -116,21 +118,21 @@ to install the R language pack.</p></li>
 directory contains Vertica extensions for K-means clustering and loading data
 back into VoltDB. The following instructions assume that the directory is
 copied to <code>/tmp/vertica</code>.</p></li>
-</ol><h2>
-<a name="demo-instructions" class="anchor" href="#demo-instructions"><span class="octicon octicon-link"></span></a>Demo Instructions</h2>
+</ol>
+
+<h2>
+<a id="demo-instructions" class="anchor" href="#demo-instructions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Demo Instructions</h2>
 
 <ol>
 <li>
 <p>Start the web server</p>
 
-<div class="highlight highlight-bash"><pre>./run.sh start_web
-</pre></div>
+<div class="highlight highlight-bash"><pre>./run.sh start_web</pre></div>
 </li>
 <li>
 <p>Start the database and client</p>
 
-<div class="highlight highlight-bash"><pre>./run.sh demo
-</pre></div>
+<div class="highlight highlight-bash"><pre>./run.sh demo</pre></div>
 </li>
 <li><p>Open a web browser to http://hostname:8081</p></li>
 <li>
@@ -138,24 +140,23 @@ copied to <code>/tmp/vertica</code>.</p></li>
 clustering algorithm on the data in Vertica. You can run this command
 periodically to update the cluster model in VoltDB.</p>
 
-<div class="highlight highlight-bash"><pre>/tmp/vertica/updatemodel.sh
-</pre></div>
+<div class="highlight highlight-bash"><pre>/tmp/vertica/updatemodel.sh</pre></div>
 </li>
 <li><p>To stop the demo:</p></li>
-</ol><p>Stop the client (if it hasn't already completed) by pressing Ctrl-C</p>
+</ol>
+
+<p>Stop the client (if it hasn't already completed) by pressing Ctrl-C</p>
 
 <p>Stop the database</p>
 
-<div class="highlight highlight-bash"><pre>voltadmin shutdown
-</pre></div>
+<div class="highlight highlight-bash"><pre>voltadmin shutdown</pre></div>
 
 <p>Stop the web server</p>
 
-<div class="highlight highlight-bash"><pre>./run.sh stop_web
-</pre></div>
+<div class="highlight highlight-bash"><pre>./run.sh stop_web</pre></div>
 
 <h2>
-<a name="options" class="anchor" href="#options"><span class="octicon octicon-link"></span></a>Options</h2>
+<a id="options" class="anchor" href="#options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Options</h2>
 
 <p>You can control various characteristics of the demo by modifying the parameters
 passed into the LogGenerator java application in the "client" function within
@@ -168,7 +169,7 @@ the run.sh script.</p>
 </code></pre>
 
 <h2>
-<a name="instructions-for-running-on-a-cluster" class="anchor" href="#instructions-for-running-on-a-cluster"><span class="octicon octicon-link"></span></a>Instructions for running on a cluster</h2>
+<a id="instructions-for-running-on-a-cluster" class="anchor" href="#instructions-for-running-on-a-cluster" aria-hidden="true"><span class="octicon octicon-link"></span></a>Instructions for running on a cluster</h2>
 
 <p>Before running this demo on a cluster, make the following changes:</p>
 
@@ -189,8 +190,7 @@ actual number of servers:</p>
 <li>
 <p>On each server, start the database</p>
 
-<div class="highlight highlight-bash"><pre>./run.sh server
-</pre></div>
+<div class="highlight highlight-bash"><pre>./run.sh server</pre></div>
 </li>
 <li>
 <p>On one server, Edit the run.sh script to set the SERVERS variable to a
@@ -201,8 +201,7 @@ comma-separated list of the servers in the cluster</p>
 <li>
 <p>Run the client script:</p>
 
-<div class="highlight highlight-bash"><pre>./run.sh client
-</pre></div>
+<div class="highlight highlight-bash"><pre>./run.sh client</pre></div>
 </li>
 </ol>
       </section>
