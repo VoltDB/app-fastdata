@@ -12,7 +12,7 @@ fi
 
 VOLTDBBIN=$(readlink -e $(which voltdb))
 if [ -z "${VOLTDBBIN}" ]; then
-  &>2 echo "did not find voltdb command"
+  >&2 echo "did not find voltdb command"
   exit 1
 fi
 
