@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<deployment>
+  <cluster hostcount="1" sitesperhost="8" kfactor="0" />
+  <commandlog enabled="false" />
+    <export enabled="true" target="http">
+      <configuration>
+        <property name="endpoint">$WEBHDFS_ENDPOINT</property>
+        <property name="httpfs.enable">true</property>
+        <property name="type">avro</property>
+      </configuration>
+    </export>
+  <httpd enabled="true">
+    <jsonapi enabled="true" />
+  </httpd>
+</deployment>

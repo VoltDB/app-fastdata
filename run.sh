@@ -205,8 +205,26 @@ function demo() {
     client
 }
 
+function hadoop-demo() {
+
+    if [[ ! "${WEBHDFS_ENDPOINT}" =~ http://[^:]+:[0-9]+/webhdfs/v1/.+/%g/%p/%t.avro\?user.name=[[:alnum:]]+ ]]
+    then
+        &>2 echo "\$WEBHDFS_ENDPOINT environment variable content must match the following pattern:"
+        &>2 echo "    http://[host-name]:[port-number]/webhdfs/v1/[export-base-directory]/%g/%p/%t.avro?user.name=[user-name]"
+        return 1
+    fi
+    export DEPLOYMENT=deployment-hadoop.xml
+
+    sed "s,\$WEBHDFS_ENDPOINT,$WEBHDFS_ENDPOINT,g" db/deployment-hadoop.xml.template > db/$DEPLOYMENT
+
+    nohup_server
+    sleep 10
+    echo "starting client..."
+    client
+}
+
 function help() {
-    echo "Usage: ./run.sh {clean|catalog|server}"
+    echo "Usage: ./run.sh {clean|catalog|demo|hadoop-demo|start_web|stop_web}"
 }
 
 # Run the target passed as the first arg on the command line

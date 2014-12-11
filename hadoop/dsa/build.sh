@@ -28,4 +28,3 @@ cat > ${HERE}/manifest.txt <<-MANIFEST
 	Class-Path: libs/${CLIENTJAR##*/}
 MANIFEST
 jar cfm ${HERE}/dsa.jar ${HERE}/manifest.txt -C ${HERE}/obj .
-

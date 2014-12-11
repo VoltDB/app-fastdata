@@ -18,10 +18,13 @@
 # 4. store the computed clusters back to voltdb by using a pig script
 #--
 
-HERE=$(dirname $(readlink -e $0))
+HERE=.
+if [[ "$0" != "${0%/*}" ]]; then
+  HERE=${0%/*}
+fi
 
 if (( $# != 2 )); then
-    >&2 echo "$(basename $0) [export-base-directory] [comma-delimited-list-of-servers]"
+    >&2 echo "${0##*/} [export-base-directory] [comma-delimited-list-of-servers]"
     exit 1
 fi
 
@@ -38,7 +41,7 @@ if [ -z "$PIGBIN" ]; then
     exit 1
 fi
 
-CDHLIB=${PIGBIN//\/bin\/pig/\/lib}
+CDHLIB=${PIGBIN%/bin/pig}/lib
 ADDITIONALS=$(ls -1 \
     $CDHLIB/parquet/parquet-pig-bundle.jar \
     $CDHLIB/pig/lib/avro.jar \
