@@ -5,7 +5,6 @@
     <export enabled="true" target="http">
       <configuration>
         <property name="endpoint">$WEBHDFS_ENDPOINT</property>
-        <property name="httpfs.enable">true</property>
         <property name="type">avro</property>
       </configuration>
     </export>
