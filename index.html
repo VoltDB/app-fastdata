@@ -77,6 +77,7 @@ other configurations that are compiled into a catalog and run in a VoltDB
 database.</li>
 <li>"client": a java client that generates click events.</li>
 <li>"web": a simple web server that provides the demo dashboard.</li>
+<li>"hadoop": a collection of pig/shell scripts, and a Spark program</li>
 </ul>
 
 <p>See below for instructions on running these applications.  For any questions,
@@ -87,13 +88,70 @@ please contact <a href="mailto:fieldengineering@voltdb.com">fieldengineering@vol
 
 <ol>
 <li>
-<p>Before running these scripts you need to have VoltDB 4.7 or later installed,
+<p>Before running these scripts you need to have VoltDB 4.8 or later installed,
 and the bin subdirectory should be added to your PATH environment variable.
-For example, if you installed VoltDB Enterprise 4.7 in your home directory,
+For example, if you installed VoltDB Enterprise 4.8 in your home directory,
 you could add it to the PATH with the following command:</p>
 
-<div class="highlight highlight-bash"><pre><span class="k">export</span> PATH=<span class="s2">"<span class="nv">$PATH</span>:<span class="nv">$HOME</span>/voltdb-ent-4.7/bin"</span></pre></div>
+<div class="highlight highlight-bash"><pre><span class="pl-s">export</span> PATH=<span class="pl-s1"><span class="pl-pds">"</span><span class="pl-vo">$PATH</span>:<span class="pl-vo">$HOME</span>/voltdb-ent-4.8/bin<span class="pl-pds">"</span></span></pre></div>
 </li>
+</ol>
+
+<h2>
+<a id="hadoop-demo" class="anchor" href="#hadoop-demo" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hadoop Demo</h2>
+
+<p>This demo requires a <a href="http://www.cloudera.com/content/cloudera/en/downloads/cloudera_manager/cm-5-2-1.html">Cloudera</a>
+Hadoop installation, whose configured services also include <a href="https://spark.apache.org/">Spark</a>.
+The demo consists of a VoltDB server writing export data to files stored in Hadoop, and
+a set of scripts, and programs that collect the exported data, compute k-means clusters on the
+collected data, and store the computations back to VoltDB.</p>
+
+<ol>
+<li>
+<p>On the server where VoltDB is installed set the environment variable
+<code>WEBHDFS_ENDPOINT</code> to a WebHDFS endpoint that matches the following pattern</p>
+
+<pre><code>http://[host]:[port]/webhdfs/v1/[export-base-directory]/%g/%p/%t.avro?user.name=[user]
+</code></pre>
+</li>
+<li>
+<p>Download this <a href="http://downloads.voltdb.com/technologies/other/fastdata-kmeans.tar.bz2">archive</a>
+and unpack it on an Hadoop node</p>
+
+<div class="highlight highlight-bash"><pre>$ tar -jxf fastdata-kmeans.tar.bz2</pre></div>
+</li>
+<li>
+<p>Change your working directory to <code>fastdata-kmeans</code> and run the <code>compute_clusters.sh</code>
+script when you to want to process exported data from VoltDB (see 
+<a href="#demo-instructions"><strong>Demo Instructions</strong></a> section bellow)</p>
+
+<div class="highlight highlight-bash"><pre>$ <span class="pl-s3">cd</span> fastdata-kmeans
+<span class="pl-c">#</span>
+<span class="pl-c"># Assuming you are exporting to export/fastdata, and VoltDB is</span>
+<span class="pl-c"># running on volthost</span>
+$ ./compute_clusters.sh <span class="pl-s">export</span>/fastdata volthost</pre></div>
+
+<p>This script</p>
+
+<ul>
+<li>Harvests the exported data by renaming the export base directory</li>
+<li>Invokes the <code>harvest.pig</code> pig script to write the harvested data into a
+Parquet database</li>
+<li>Starts a Spark job that computes the K-Means clusters on the data stored
+in the parquet database, and creates another parquet db with the resulting
+computations.</li>
+<li>Invokes the <code>load.pig</code> script that reads the K-Means computation Parquet
+database, and writes its content back to VoltDB by utilizing the
+<a href="https://github.com/VoltDB/voltdb-hadoop-extension">VoltDB hadoop extensions</a>
+</li>
+</ul>
+</li>
+</ol>
+
+<h2>
+<a id="vertica-demo" class="anchor" href="#vertica-demo" aria-hidden="true"><span class="octicon octicon-link"></span></a>Vertica Demo</h2>
+
+<ol>
 <li>
 <p>This example also requires <a href="http://www.vertica.com">Vertica</a> installed on the
 same machine or a machine that the VoltDB machine has access to. A Vertica
@@ -102,7 +160,7 @@ Vertica is running, set the environment variable <code>VERTICAIP</code> to point
 Vertica machine on the VoltDB machine. For example, if your Vertica is
 running on 192.168.0.1, run the following command on the VoltDB machine:</p>
 
-<div class="highlight highlight-bash"><pre><span class="k">export</span> VERTICAIP=<span class="s2">"192.168.0.1"</span></pre></div>
+<div class="highlight highlight-bash"><pre><span class="pl-s">export</span> VERTICAIP=<span class="pl-s1"><span class="pl-pds">"</span>192.168.0.1<span class="pl-pds">"</span></span></pre></div>
 </li>
 <li><p>VoltDB uses JDBC to export click events to Vertica. Vertica's JDBC driver
 must be present in the classpath before starting VoltDB. If your Vertica is
@@ -132,15 +190,18 @@ copied to <code>/tmp/vertica</code>.</p></li>
 <li>
 <p>Start the database and client</p>
 
-<div class="highlight highlight-bash"><pre>./run.sh demo</pre></div>
+<div class="highlight highlight-bash"><pre><span class="pl-c"># for Hadoop run</span>
+$ ./run.sh hadoop_demo
+<span class="pl-c"># while for Vertical run</span>
+$ ./run.sh demo</pre></div>
 </li>
 <li><p>Open a web browser to http://hostname:8081</p></li>
 <li>
-<p>Run the <code>updatemodel.sh</code> script on the Vertica machine to run the K-means
-clustering algorithm on the data in Vertica. You can run this command
-periodically to update the cluster model in VoltDB.</p>
+<p>For Vertica run the <code>updatemodel.sh</code> script on the Vertica machine to run
+the K-means clustering algorithm on the data in Vertica. You can run this
+command periodically to update the cluster model in VoltDB.</p>
 
-<div class="highlight highlight-bash"><pre>/tmp/vertica/updatemodel.sh</pre></div>
+<div class="highlight highlight-bash"><pre>$ /tmp/vertica/updatemodel.sh</pre></div>
 </li>
 <li><p>To stop the demo:</p></li>
 </ol>
@@ -149,11 +210,11 @@ periodically to update the cluster model in VoltDB.</p>
 
 <p>Stop the database</p>
 
-<div class="highlight highlight-bash"><pre>voltadmin shutdown</pre></div>
+<div class="highlight highlight-bash"><pre>$ voltadmin shutdown</pre></div>
 
 <p>Stop the web server</p>
 
-<div class="highlight highlight-bash"><pre>./run.sh stop_web</pre></div>
+<div class="highlight highlight-bash"><pre>$ ./run.sh stop_web</pre></div>
 
 <h2>
 <a id="options" class="anchor" href="#options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Options</h2>
