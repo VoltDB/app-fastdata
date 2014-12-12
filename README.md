@@ -92,7 +92,7 @@ collected data, and store the computations back to VoltDB.
    #
    # Assuming you are exporting to export/fastdata, and VoltDB is
    # running on volthost
-   $ ./compute_clusters.sh export/fast volthost
+   $ ./compute_clusters.sh export/fastdata volthost
    ```
 
    This script
