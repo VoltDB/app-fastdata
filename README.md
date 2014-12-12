@@ -57,9 +57,11 @@ Pre-requisites
    and the bin subdirectory should be added to your PATH environment variable.
    For example, if you installed VoltDB Enterprise 4.8 in your home directory,
    you could add it to the PATH with the following command:
+
     ```bash
     export PATH="$PATH:$HOME/voltdb-ent-4.8/bin"
     ```
+    
 Hadoop Demo
 -----------
 
@@ -71,11 +73,13 @@ collected data, and store the computations back to VoltDB.
 
 1. On the server where VoltDB is installed set the environment variable
    `WEBHDFS_ENDPOINT` to a WebHDFS endpoint that matches the following pattern
+
    ```
    http://[host]:[port]/webhdfs/v1/[export-base-directory]/%g/%p/%t.avro?user.name=[user]
    ```
 2. Download this [archive](http://downloads.voltdb.com/technologies/other/fastdata-kmeans.tar.bz2)
    and unpack it on an Hadoop node
+
    ```bash
    $ tar -jxf fastdata-kmeans.tar.bz2
    ```
