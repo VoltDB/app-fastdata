@@ -84,8 +84,8 @@ collected data, and store the computations back to VoltDB.
    $ tar -jxf fastdata-kmeans.tar.bz2
    ```
 3. Change your working directory to `fastdata-kmeans` and run the `compute_clusters.sh`
-   script when you to want to process exported data from VoltDB (see **Demo Instructions**
-   section bellow)
+   script when you to want to process exported data from VoltDB (see 
+   [**Demo Instructions**](#demo-instructions) section bellow)
 
    ```bash
    $ cd fastdata-kmeans
