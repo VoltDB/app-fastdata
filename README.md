@@ -107,8 +107,8 @@ collected data, and store the computations back to VoltDB.
      database, and writes its content back to VoltDB by utilizing the
      [VoltDB hadoop extensions](https://github.com/VoltDB/voltdb-hadoop-extension)
 
-  Vertica Demo
-  ------------
+Vertica Demo
+------------
 
 1. This example also requires [Vertica](http://www.vertica.com) installed on the
    same machine or a machine that the VoltDB machine has access to. A Vertica
