@@ -45,6 +45,7 @@ The code is divided into projects:
   database.
 - "client": a java client that generates click events.
 - "web": a simple web server that provides the demo dashboard.
+- "hadoop": a collection of pig/shell scripts, and a Spark program
 
 See below for instructions on running these applications.  For any questions,
 please contact fieldengineering@voltdb.com.
@@ -52,13 +53,62 @@ please contact fieldengineering@voltdb.com.
 Pre-requisites
 --------------
 
-1. Before running these scripts you need to have VoltDB 4.7 or later installed,
+1. Before running these scripts you need to have VoltDB 4.8 or later installed,
    and the bin subdirectory should be added to your PATH environment variable.
-   For example, if you installed VoltDB Enterprise 4.7 in your home directory,
+   For example, if you installed VoltDB Enterprise 4.8 in your home directory,
    you could add it to the PATH with the following command:
+
     ```bash
-    export PATH="$PATH:$HOME/voltdb-ent-4.7/bin"
+    export PATH="$PATH:$HOME/voltdb-ent-4.8/bin"
     ```
+    
+Hadoop Demo
+-----------
+
+This demo requires a [Cloudera](http://www.cloudera.com/content/cloudera/en/downloads/cloudera_manager/cm-5-2-1.html)
+Hadoop installation, whose configured services also include [Spark](https://spark.apache.org/).
+The demo consists of a VoltDB server writing export data to files stored in Hadoop, and
+a set of scripts, and programs that collect the exported data, compute k-means clusters on the
+collected data, and store the computations back to VoltDB.
+
+1. On the server where VoltDB is installed set the environment variable
+   `WEBHDFS_ENDPOINT` to a WebHDFS endpoint that matches the following pattern
+
+   ```
+   http://[host]:[port]/webhdfs/v1/[export-base-directory]/%g/%p/%t.avro?user.name=[user]
+   ```
+2. Download this [archive](http://downloads.voltdb.com/technologies/other/fastdata-kmeans.tar.bz2)
+   and unpack it on an Hadoop node
+
+   ```bash
+   $ tar -jxf fastdata-kmeans.tar.bz2
+   ```
+3. Change your working directory to `fastdata-kmeans` and run the `compute_clusters.sh`
+   script when you to want to process exported data from VoltDB (see 
+   [**Demo Instructions**](#demo-instructions) section bellow)
+
+   ```bash
+   $ cd fastdata-kmeans
+   #
+   # Assuming you are exporting to export/fastdata, and VoltDB is
+   # running on volthost
+   $ ./compute_clusters.sh export/fastdata volthost
+   ```
+
+   This script
+
+   * Harvests the exported data by renaming the export base directory
+   * Invokes the `harvest.pig` pig script to write the harvested data into a
+     Parquet database
+   * Starts a Spark job that computes the K-Means clusters on the data stored
+     in the parquet database, and creates another parquet db with the resulting
+     computations.
+   * Invokes the `load.pig` script that reads the K-Means computation Parquet
+     database, and writes its content back to VoltDB by utilizing the
+     [VoltDB hadoop extensions](https://github.com/VoltDB/voltdb-hadoop-extension)
+
+  Vertica Demo
+  ------------
 
 1. This example also requires [Vertica](http://www.vertica.com) installed on the
    same machine or a machine that the VoltDB machine has access to. A Vertica
@@ -97,16 +147,19 @@ Demo Instructions
 
 2. Start the database and client
     ```bash
-    ./run.sh demo
+    # for Hadoop run
+    $ ./run.sh hadoop_demo
+    # while for Vertical run
+    $ ./run.sh demo
     ```
 
 3. Open a web browser to http://hostname:8081
 
-4. Run the `updatemodel.sh` script on the Vertica machine to run the K-means
-   clustering algorithm on the data in Vertica. You can run this command
-   periodically to update the cluster model in VoltDB.
+4. For Vertica run the `updatemodel.sh` script on the Vertica machine to run
+   the K-means clustering algorithm on the data in Vertica. You can run this
+   command periodically to update the cluster model in VoltDB.
     ```bash
-    /tmp/vertica/updatemodel.sh
+    $ /tmp/vertica/updatemodel.sh
     ```
 
 5. To stop the demo:
@@ -115,12 +168,12 @@ Stop the client (if it hasn't already completed) by pressing Ctrl-C
 
 Stop the database
 ```bash
-voltadmin shutdown
+$ voltadmin shutdown
 ```
 
 Stop the web server
 ```bash
-./run.sh stop_web
+$ ./run.sh stop_web
 ```
 
 Options

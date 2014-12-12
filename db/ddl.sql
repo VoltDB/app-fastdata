@@ -10,6 +10,38 @@ CREATE TABLE clusters
   CONSTRAINT clusters_pkey PRIMARY KEY (id)
 );
 
+CREATE TABLE clusters_dsa
+(
+  id       integer        NOT NULL,
+  src      integer        NOT NULL,
+  dest     integer        NOT NULL,
+  referral integer        NOT NULL,
+  agent    integer        NOT NULL,
+  CONSTRAINT clusters_dsa_pkey PRIMARY KEY (id)
+);
+
+CREATE PROCEDURE events.TruncateDsa AS ###
+    truncateSTMT = new SQLStmt('DELETE FROM clusters_dsa;')
+    transactOn = {
+        voltQueueSQL(truncateSTMT)
+        voltExecuteSQL(true)
+    }
+### LANGUAGE GROOVY;
+
+CREATE PROCEDURE events.LoadDsa AS ###
+    truncateSTMT = new SQLStmt('DELETE FROM clusters;')
+    loadSTMT = new SQLStmt('''
+        INSERT INTO CLUSTERS (id,src,dest,referral,agent)
+        SELECT id,src,dest,referral,agent FROM clusters_dsa
+         ORDER BY id;
+    ''')
+    transactOn = {
+        voltQueueSQL(truncateSTMT)
+        voltQueueSQL(loadSTMT)
+        voltExecuteSQL(true)
+    }
+### LANGUAGE GROOVY;
+
 -- replicated table for destinations
 CREATE TABLE dests
 (
