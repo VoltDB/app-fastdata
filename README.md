@@ -65,6 +65,53 @@ Pre-requisites
 Hadoop Demo
 -----------
 
+Running with Hortonworks
+------------------------
+This demo requires a [Hortonworks HDP](http://www.hortonworks.com/)
+Hadoop installation (HDP), whose configured services also include [Spark](https://spark.apache.org/).
+The demo consists of a VoltDB server writing export data to files stored in Hadoop, and
+a set of scripts, and programs that collect the exported data, compute k-means clusters on the
+collected data, and store the computations back to VoltDB.
+
+1. On the server where VoltDB is installed set the environment variable
+   `WEBHDFS_ENDPOINT` to a WebHDFS endpoint that matches the following pattern
+
+   ```
+   http://[host]:[port]/webhdfs/v1/[export-base-directory]/%g/%p/%t.avro?user.name=[user]
+   ```
+2. Download this [archive](http://downloads.voltdb.com/technologies/other/fastdata-kmeans.tar.bz2)
+   and unpack it on an Hadoop node
+
+   ```bash
+   $ tar -jxf fastdata-kmeans.tar.bz2
+   ```
+3. Change your working directory to `fastdata-kmeans` and run the `hdp_compute_clusters.sh`
+   script when you to want to process exported data from VoltDB (see 
+   [**Demo Instructions**](#demo-instructions) section bellow)
+
+   ```bash
+   $ cd fastdata-kmeans
+   #
+   # Assuming you are exporting to /export/fastdata, and VoltDB is
+   # running on volthost
+   $ ./hdp_compute_clusters.sh /export/fastdata volthost
+   ```
+
+   This script
+
+   * Harvests the exported data by renaming the export base directory
+   * Invokes the `hdp.harvest.pig` pig script to write the harvested data into a
+     Parquet database
+   * Starts a Spark job that computes the K-Means clusters on the data stored
+     in the parquet database, and creates another parquet db with the resulting
+     computations.
+   * Invokes the `hdp.load.pig` script that reads the K-Means computation Parquet
+     database, and writes its content back to VoltDB by utilizing the
+     [VoltDB hadoop extensions](https://github.com/VoltDB/voltdb-hadoop-extension)
+
+
+Running with Hortonworks
+------------------------
 This demo requires a [Cloudera](http://www.cloudera.com/content/cloudera/en/downloads/cloudera_manager/cm-5-2-1.html)
 Hadoop installation, whose configured services also include [Spark](https://spark.apache.org/).
 The demo consists of a VoltDB server writing export data to files stored in Hadoop, and
