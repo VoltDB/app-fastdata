@@ -110,8 +110,8 @@ collected data, and store the computations back to VoltDB.
      [VoltDB hadoop extensions](https://github.com/VoltDB/voltdb-hadoop-extension)
 
 
-Running with Hortonworks
-------------------------
+Running with Cloudera
+---------------------
 This demo requires a [Cloudera](http://www.cloudera.com/content/cloudera/en/downloads/cloudera_manager/cm-5-2-1.html)
 Hadoop installation, whose configured services also include [Spark](https://spark.apache.org/).
 The demo consists of a VoltDB server writing export data to files stored in Hadoop, and
