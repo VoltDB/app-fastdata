@@ -67,25 +67,27 @@ Hadoop Demo
 
 Running with Hortonworks
 ------------------------
-This demo requires a [Hortonworks HDP](http://www.hortonworks.com/)
-Hadoop installation (HDP), whose configured services also include [Spark](https://spark.apache.org/).
+This demo requires a [Hortonworks HDP](http://www.hortonworks.com/) Hadoop installation (HDP).
 The demo consists of a VoltDB server writing export data to files stored in Hadoop, and
 a set of scripts, and programs that collect the exported data, compute k-means clusters on the
 collected data, and store the computations back to VoltDB.
 
-1. On the server where VoltDB is installed set the environment variable
+1. On all Hortonworks cluster nodes install Spark by following these
+   [instructions](http://hortonworks.com/hadoop-tutorial/using-apache-spark-hdp/)
+
+2. On the server where VoltDB is installed set the environment variable
    `WEBHDFS_ENDPOINT` to a WebHDFS endpoint that matches the following pattern
 
    ```
    http://[host]:[port]/webhdfs/v1/[export-base-directory]/%g/%p/%t.avro?user.name=[user]
    ```
-2. Download this [archive](http://downloads.voltdb.com/technologies/other/fastdata-kmeans.tar.bz2)
+3. Download this [archive](http://downloads.voltdb.com/technologies/other/fastdata-kmeans.tar.bz2)
    and unpack it on an Hadoop node
 
    ```bash
    $ tar -jxf fastdata-kmeans.tar.bz2
    ```
-3. Change your working directory to `fastdata-kmeans` and run the `hdp_compute_clusters.sh`
+4. Change your working directory to `fastdata-kmeans` and run the `hdp_compute_clusters.sh`
    script when you to want to process exported data from VoltDB (see 
    [**Demo Instructions**](#demo-instructions) section bellow)
 

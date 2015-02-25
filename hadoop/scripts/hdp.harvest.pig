@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+fs -rm -f -R -skipTrash $PROCESSBASE
+fs -mv $EXPORTBASE $PROCESSBASE
+
 exported = LOAD '$PROCESSBASE/*/[0-9]*/*.avro' USING AvroStorage();
 trimmed = FOREACH exported GENERATE src,dest,referral,agent;
 STORE trimmed INTO '$PROCESSBASE/source' USING ParquetStorer();

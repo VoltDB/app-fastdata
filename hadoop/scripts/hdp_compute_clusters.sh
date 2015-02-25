@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #++
-#   C O M P U T E _ C L U S T E R S . S H
+#   H D P _ C O M P U T E _ C L U S T E R S . S H
 #
-# this script assumes that you are running on a node with a recent (V5+) Cloudera
+# this script assumes that you are running on a node with a recent (V2.2) Hortonworks
 # Hadoop distribution, it expects that your VoltDB fast data app is exporting avro
 # files using the following layout
 # 
@@ -18,7 +18,10 @@
 # 4. store the computed clusters back to voltdb by using a pig script
 #--
 
-HERE=$(dirname $(readlink -e $0))
+HERE=.
+if [[ "$0" != "${0%/*}" ]]; then
+  HERE=${0%/*}
+fi
 
 if (( $# != 2 )); then
     >&2 echo "$(basename $0) [export-base-directory] [comma-delimited-list-of-servers]"
@@ -32,10 +35,22 @@ if [[ "${EXPORTBASE}" != "${EXPORTBASE%/*}" ]]; then
 fi
 SERVERS=$2
 
+if [ -z "$SPARK_HOME" ]; then
+    >&2 echo "SPARK_HOME environment variable is not defined"; exit 1
+fi
+
+SPARK_CMD="${SPARK_HOME}/bin/spark-submit"
+if [ ! -e "$SPARK_CMD" -o ! -f "$SPARK_CMD" -o ! -x "$SPARK_CMD" ]; then
+    >&2 echo "$SPARK_CMD is not accessible or executable"; exit 1
+fi
+
+if [ -z "$YARN_CONF_DIR" ]; then
+    >&2 echo "YARN_CONF_DIR environment variable is not defined"; exit 1
+fi
+
 PIGBIN=$(readlink -e `which pig`)
 if [ -z "$PIGBIN" ]; then
-    >&2 echo "did not find pig"
-    exit 1
+    >&2 echo "did not find pig"; exit 1
 fi
 
 PIGLIB=${PIGBIN//\/bin\/pig/\/lib}
@@ -53,24 +68,15 @@ jsonlist() {
     unset IFS
 }
 
-hadoop fs -rm -R -f -skipTrash $PROCESSBASE
-hadoop fs -mv $EXPORTBASE $PROCESSBASE
-
 pig -Dpig.additional.jars="${ADDITIONALS}" \
+    -param EXPORTBASE="$EXPORTBASE" \
     -param PROCESSBASE="$PROCESSBASE" \
     $HERE/hdp.harvest.pig
 
-export YARN_CONF_DIR=/etc/hadoop/conf
-# Set spark home
-export SPARK_HOME=/spark
-spark-submit \
-  --class KMeansReferral \
-  --master local --deploy-mode client \
-  --num-executors 4 --executor-cores 2 \
-  --driver-memory 1g --executor-memory 1g \
-  $HERE/kmeans-referral_2.10-1.0.jar ${PROCESSBASE}/source ${PROCESSBASE}/centers
-
-#--master yarn-master --deploy-mode cluster \
+$SPARK_CMD --class KMeansReferral \
+    --master yarn-cluster --num-executors 3 \
+    --driver-memory 512m --executor-memory 512m --executor-cores 1 \
+    $HERE/kmeans-referral_2.10-1.0.jar ${PROCESSBASE}/source ${PROCESSBASE}/centers
 
 java -jar $HERE/dsa.jar --servers="$SERVERS" --action=CLEAR
 
