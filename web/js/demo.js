@@ -20,6 +20,18 @@ function RefreshData(){
                          DrawBarChart(response,'#events_chart');
                      }
                     );
+     con.BeginExecute('GetTopSources',
+                     [10],
+                     function(response) {
+                         DrawTable(response,'#table_top_sources');
+                     }
+                    );
+     con.BeginExecute('GetTopSrcDests',
+                     [10],
+                     function(response) {
+                         DrawTable(response,'#table_top_src_dests');
+                     }
+                    );
 }
 
 function RefreshStats() {

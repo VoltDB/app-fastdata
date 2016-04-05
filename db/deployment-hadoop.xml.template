@@ -2,13 +2,13 @@
 <deployment>
   <cluster hostcount="1" sitesperhost="8" kfactor="0" />
   <commandlog enabled="false" />
-    <export enabled="true" target="http">
-      <configuration>
-        <property name="endpoint">$WEBHDFS_ENDPOINT</property>
+   <export>
+      <configuration target="hadoop" enabled="true" type="http">
+       <property name="endpoint">$WEBHDFS_ENDPOINT</property>
         <property name="type">avro</property>
       </configuration>
     </export>
-  <httpd enabled="true">
-    <jsonapi enabled="true" />
-  </httpd>
+    <httpd enabled="true">
+      <jsonapi enabled="true" />
+    </httpd>
 </deployment>

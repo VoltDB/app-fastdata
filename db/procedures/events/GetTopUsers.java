@@ -39,7 +39,7 @@ public class GetTopUsers extends VoltProcedure {
         voltQueueSQL(getTopSecond, seconds, n);
         final VoltTable result = voltExecuteSQL(true)[0];
         final VoltTable.ColumnInfo[] schema = result.getTableSchema();
-        schema[0] = new VoltTable.ColumnInfo("SRC", VoltType.STRING);
+        schema[0] = new VoltTable.ColumnInfo("SOURCE", VoltType.STRING);
         final VoltTable processed = new VoltTable(schema);
         while (result.advanceRow()) {
             processed.addRow(Utils.itoip((int) result.getLong(0)),
