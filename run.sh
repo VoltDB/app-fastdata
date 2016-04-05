@@ -220,7 +220,7 @@ function hadoop_demo() {
 }
 
 function help() {
-    echo "Usage: ./run.sh {clean|d|demo|hadoop_demo|start_web|stop_web}"
+    echo "Usage: ./run.sh {clean|catalog|demo|hadoop_demo|start_web|stop_web}"
 }
 
 # Run the target passed as the first arg on the command line
