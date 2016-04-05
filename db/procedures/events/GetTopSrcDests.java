@@ -21,9 +21,6 @@ package events;
 import org.voltdb.SQLStmt;
 import org.voltdb.VoltProcedure;
 import org.voltdb.VoltTable;
-import org.voltdb.VoltType;
-
-import java.net.UnknownHostException;
 
 public class GetTopSrcDests extends VoltProcedure {
     final SQLStmt getTopSrcSource = new SQLStmt(
@@ -31,18 +28,9 @@ public class GetTopSrcDests extends VoltProcedure {
     		"WHERE dest = dests.id ORDER BY counts DESC LIMIT ?;"
     );
 
-    public VoltTable run(int n) throws UnknownHostException
+    public VoltTable run(int n)
     {
         voltQueueSQL(getTopSrcSource, n);
-        final VoltTable result = voltExecuteSQL(true)[0];
-        final VoltTable.ColumnInfo[] schema = result.getTableSchema();
-        schema[0] = new VoltTable.ColumnInfo("SOURCE", VoltType.STRING);
-        final VoltTable processed = new VoltTable(schema);
-        while (result.advanceRow()) {
-            processed.addRow(Utils.itoip((int) result.getLong(0)),
-                    result.getString(1), result.getLong(2));
-        }
-
-        return processed;
+        return voltExecuteSQL(true)[0];
     }
 }

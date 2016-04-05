@@ -21,31 +21,19 @@ package events;
 import org.voltdb.SQLStmt;
 import org.voltdb.VoltProcedure;
 import org.voltdb.VoltTable;
-import org.voltdb.VoltType;
-
-import java.net.UnknownHostException;
 
 public class GetTopUsers extends VoltProcedure {
     final SQLStmt getTopSecond = new SQLStmt(
-            "SELECT src, SUM(count_values) AS counts " +
+            "SELECT src As Sources, SUM(count_values) AS counts " +
             "FROM events_by_second " +
             "WHERE TO_TIMESTAMP(SECOND, SINCE_EPOCH(SECOND, NOW) - ?) <= second_ts " +
             "GROUP BY src " +
             "ORDER BY counts DESC, src LIMIT ?;"
     );
 
-    public VoltTable run(int seconds, int n) throws UnknownHostException
+    public VoltTable run(int seconds, int n)
     {
         voltQueueSQL(getTopSecond, seconds, n);
-        final VoltTable result = voltExecuteSQL(true)[0];
-        final VoltTable.ColumnInfo[] schema = result.getTableSchema();
-        schema[0] = new VoltTable.ColumnInfo("SOURCE", VoltType.STRING);
-        final VoltTable processed = new VoltTable(schema);
-        while (result.advanceRow()) {
-            processed.addRow(Utils.itoip((int) result.getLong(0)),
-                    result.getLong(1));
-        }
-
-        return processed;
+        return voltExecuteSQL(true)[0];
     }
 }
