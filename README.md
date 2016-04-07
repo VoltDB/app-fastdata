@@ -53,13 +53,13 @@ please contact fieldengineering@voltdb.com.
 Pre-requisites
 --------------
 
-1. Before running these scripts you need to have VoltDB 4.8 or later installed,
+1. Before running these scripts you need to have VoltDB 6.1 or later installed,
    and the bin subdirectory should be added to your PATH environment variable.
-   For example, if you installed VoltDB Enterprise 4.8 in your home directory,
+   For example, if you installed VoltDB Enterprise 6.1 in your home directory,
    you could add it to the PATH with the following command:
 
     ```bash
-    export PATH="$PATH:$HOME/voltdb-ent-4.8/bin"
+    export PATH="$PATH:$HOME/voltdb-ent-6.1/bin"
     ```
     
 Hadoop Demo
