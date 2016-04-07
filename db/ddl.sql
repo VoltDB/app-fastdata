@@ -75,8 +75,9 @@ PARTITION TABLE events ON COLUMN src;
 CREATE INDEX event_ts_index ON events (ts);
 CREATE INDEX event_src_dest_index ON events (src, dest);
 
--- export events
-CREATE TABLE events_export
+CREATE STREAM events_export
+EXPORT TO TARGET hadoop
+PARTITION ON COLUMN src
 (
   src      integer        NOT NULL,
   dest     integer        NOT NULL,
@@ -86,8 +87,18 @@ CREATE TABLE events_export
   referral integer        NOT NULL,
   agent    integer        NOT NULL
 );
-EXPORT TABLE events_export;
 
+--Events exported view
+CREATE VIEW events_by_src_view
+    ( src, total_visits)
+   AS SELECT src, COUNT(*)
+       FROM events_export GROUP BY src;
+
+CREATE VIEW events_by_src_dest_view
+    ( src, dest, counts)
+   AS SELECT src, dest, COUNT(*)
+       FROM events_export
+       GROUP BY src, dest;
 -- Agg views
 CREATE VIEW events_sessions
 (
@@ -143,6 +154,9 @@ PARTITION PROCEDURE NewEvent ON TABLE events COLUMN src;
 
 CREATE PROCEDURE FROM CLASS events.GetTopUsers;
 IMPORT CLASS events.Utils;
+
+CREATE PROCEDURE FROM CLASS events.GetTopSources;
+CREATE PROCEDURE FROM CLASS events.GetTopSrcDests;
 
 CREATE PROCEDURE GetTopDests AS
 SELECT dests.url AS url, SUM(count_values) AS counts

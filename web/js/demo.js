@@ -3,7 +3,7 @@ function RefreshData(){
     con.BeginExecute('GetTopUsers',
                      [60, 10],
                      function(response) {
-                         DrawTable(response,'#table_top_users');
+                         DrawTable(response,'#table_top_users', 0);
                      }
                     );
 
@@ -18,6 +18,18 @@ function RefreshData(){
                      [60],
                      function(response) {
                          DrawBarChart(response,'#events_chart');
+                     }
+                    );
+     con.BeginExecute('GetTopSources',
+                     [10],
+                     function(response) {
+                         DrawTable(response,'#table_top_sources', 0);
+                     }
+                    );
+     con.BeginExecute('GetTopSrcDests',
+                     [10],
+                     function(response) {
+                         DrawTable(response,'#table_top_src_dests', 0);
                      }
                     );
 }
@@ -63,7 +75,7 @@ function DrawBarChart(response, placeholder) {
     $.plot($(placeholder), [eventline], options);
 }
 
-function DrawTable(response, tableName) {
+function DrawTable(response, tableName, ipLongColumn) {
     try {
         var tables = response.results;
         var hmt = tables[0];
@@ -85,14 +97,17 @@ function DrawTable(response, tableName) {
             tbodyhtml += '<tr>';
             for (var c=0;c<colcount;c++) { // for each column
                 var f = hmt.data[r][c];
+				if(ipLongColumn !== null && ipLongColumn == c){
+				   f = formatIntegerAsIp(f);
+				}else{			
+                  // if type is DECIMAL
+                  if (hmt.schema[c].type == 22 || hmt.schema[c].type == 8) {
+                      f = formatDecimal(f);
+                   }
 
-                // if type is DECIMAL
-                if (hmt.schema[c].type == 22 || hmt.schema[c].type == 8) {
-                    f = formatDecimal(f);
-                }
-
-                if (hmt.schema[c].type == 11) {
-                    f = formatDateAsTime(f);
+                   if (hmt.schema[c].type == 11) {
+                      f = formatDateAsTime(f);
+                    }
                 }
                 tbodyhtml += '<td>' + f + '</td>';
             }
@@ -102,3 +117,7 @@ function DrawTable(response, tableName) {
 
     } catch(x) {}
 }
+
+function formatIntegerAsIp(ipl){
+  return ( (ipl>>>24) +'.' + (ipl>>16 & 255) +'.' + (ipl>>8 & 255) +'.' + (ipl & 255) );
+};

@@ -61,7 +61,7 @@ LICENSE="$VOLTDB_HOME/voltdb/license.xml"
 function clean() {
     rm -rf voltdbroot export statement-plans log catalog-report.html
     rm -f web/http.log web/http.pid
-    rm -rf db/obj db/$APPNAME.jar db/nohup.log db/deployment-demo.xml
+    rm -rf db/obj db/$APPNAME.jar db/nohup.log db/deployment-demo.xml db/deployment-hadoop.xml
     rm -rf client/obj client/log
     rm -rf nibbler/obj nibbler/log nibbler/nohup.log
 }
@@ -139,8 +139,6 @@ function client() {
     if [ ! -d nibbler/obj ]; then compile-client; fi
 
     CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
-    CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/commons-cli-*.jar`"
-
     pushd nibbler
     echo "running nibbler..."
     nohup java -classpath obj:$CLASSPATH -Dlog4j.configuration=file://$VOLTDB_HOME/voltdb/log4j.xml \
@@ -166,8 +164,6 @@ function client() {
 
 function compile-client() {
     CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
-    CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/commons-cli-*.jar`"
-
     pushd client
     # compile client
     mkdir -p obj

@@ -43,7 +43,7 @@
         destination URL, timestamp, HTTP method name, referral URL, and the user
         agent string. More information can be included in a real-world use
         case.</p>
-        <p>The stream is ingested into VoltDB, cleaned up, then exported into a
+        <p>The stream is ingested into VoltDB, cleaned up, then exported into stream view and/or a
         data warehouse for long term persistence. The data warehouse runs
         machine learning algorithm on the full historical dataset to segment the
         click events into clusters periodically. Each cluster is represented by
@@ -63,15 +63,15 @@
         <div class="col-md-4">
           <br><br>
           <p>The chart to the left shows the number of real-time events in each
-          cluster in the past minute. As events are streamed into VoltDB, they
-          are assigned to clusters based on the shortest Euclidean distances to
+          cluster in the past minute and the top users/destinations during the whole time span. As events
+          are streamed into VoltDB, they are assigned to clusters based on the shortest Euclidean distances to
           the cluster centers. The cluster centers are calculated on the entire
           dataset in the data warehouse periodically, then the centers are fed
           back into VoltDB.</p>
         </div>
       </div>
 
-      <div class="row">
+     <div class="row">
         <div class="col-md-8">
           <h4>Top Users In Past Minute</h4>
           <table class="table table-bordered table-striped table-condensed table-volt" id="table_top_users">
@@ -82,11 +82,24 @@
           <div id="tps_chart" style="height:200px;"></div>
         </div>
       </div>
-
+      <div class="row">
+        <div class="col-md-8">
+          <h4>Overall Top Users</h4>
+          <table class="table table-bordered table-striped table-condensed table-volt" id="table_top_sources">
+          </table>
+        </div>
+      </div>
       <div class="row">
         <div class="col-md-8">
           <h4>Top Destinations In Past Minute</h4>
           <table class="table table-bordered table-striped table-condensed table-volt" id="table_top_dests">
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-8">
+          <h4>Overall Top Users and Destinations</h4>
+          <table class="table table-bordered table-striped table-condensed table-volt" id="table_top_src_dests">
           </table>
         </div>
       </div>
