@@ -18,22 +18,84 @@
 
 package events;
 
-import au.com.bytecode.opencsv_voltpatches.CSVReader;
-import org.voltcore.utils.Pair;
-import org.voltdb.CLIConfig;
-import org.voltdb.client.*;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
+
+import org.voltcore.utils.Pair;
+import org.voltdb.CLIConfig;
+import org.voltdb.client.Client;
+import org.voltdb.client.ClientConfig;
+import org.voltdb.client.ClientFactory;
+import org.voltdb.client.ClientResponse;
+import org.voltdb.client.ClientStats;
+import org.voltdb.client.ClientStatsContext;
+import org.voltdb.client.NullCallback;
+import org.voltdb.client.ProcedureCallback;
+
+import au.com.bytecode.opencsv_voltpatches.CSVReader;
 
 public class LogGenerator {
     private final Config config;
     private final Client client;
 
-    private final List<Pair<Integer, Integer>> ipRanges = new ArrayList<>();
+    private static class Sample {
+        private final int src;
+        private final String dest;
+        private final String referral;
+        private final String agent;
+
+        Sample(int src, String dest, String referral, String agent) {
+            this.src = src;
+            this.dest = dest;
+            this.referral = referral;
+            this.agent = agent;
+        }
+    }
+
+    private class Generator {
+        private final int ipRangeMin;
+        private final int ipRangeMax;
+        private final int[] urlPermutation;
+        private final int[] agentPermutation;
+
+        Generator(int ipRangeMin, int ipRangeMax, int[] urlPermutation, int[] agentPermutation) {
+            this.ipRangeMin = ipRangeMin;
+            this.ipRangeMax = ipRangeMax;
+            this.urlPermutation = urlPermutation;
+            this.agentPermutation = agentPermutation;
+        }
+
+        Sample nextSample() {
+            int src = ipRangeMin + rand.nextInt(ipRangeMax - ipRangeMin);
+            String dest = urls.get(nextIndex(urlPermutation.length));
+            String referral = "";
+            if (rand.nextBoolean()) {
+                referral = urls.get(nextIndex(urlPermutation.length));
+            }
+            String agent = agents.get(nextIndex(agentPermutation.length));
+            return new Sample(src, dest, referral, agent);
+        }
+
+        // lazy assumption: generate from the preference permutation groups
+        // as if it were geometrically distributed (p=2/3), and then shove the
+        // extra tail weight into the 0th element
+        int nextIndex(int max) {
+            int idx = (int)(Math.log(rand.nextDouble()) / Math.log(0.33));
+            if (idx >= max) {
+                return 0;
+            }
+            return idx;
+        }
+    }
+    private final List<Generator> generators = new ArrayList<>();
     private final List<String> urls = new ArrayList<>();
     private final List<String> agents = new ArrayList<>();
 
@@ -61,11 +123,15 @@ public class LogGenerator {
         @Option(desc = "Password for connection.")
         String password = "";
 
+        @Option(desc = "Number of clusters from which to generate.")
+        int clusters = 20;
+
         @Override
         public void validate()
         {
             if (duration <= 0) exitWithMessageAndUsage("duration must be > 0");
             if (ratelimit <= 0) exitWithMessageAndUsage("ratelimit must be > 0");
+            if (clusters <= 0) exitWithMessageAndUsage("clusters must be > 0");
         }
     }
 
@@ -79,20 +145,22 @@ public class LogGenerator {
         }
     }
 
-    private void loadIpRanges() throws IOException
+    private List<Pair<Integer, Integer>> loadIpRanges() throws IOException
     {
+        List<Pair<Integer, Integer>> ipRanges = new ArrayList<>();
         final CSVReader reader = new CSVReader(new FileReader("data/ips.csv"));
         String[] line;
         while ((line = reader.readNext()) != null) {
             ipRanges.add(Pair.of(Utils.iptoi(line[0]), Utils.iptoi(line[1])));
         }
         reader.close();
+        return ipRanges;
     }
 
-    private int nextIp()
+    private Sample nextSample()
     {
-        final Pair<Integer, Integer> range = ipRanges.get(rand.nextInt(ipRanges.size()));
-        return range.getFirst() + rand.nextInt(range.getSecond() - range.getFirst() + 1);
+        final Generator generator = generators.get(rand.nextInt(generators.size()));
+        return generator.nextSample();
     }
 
     private void loadUrls() throws IOException, InterruptedException
@@ -121,6 +189,68 @@ public class LogGenerator {
         }
         reader.close();
         client.drain();
+    }
+
+    private int[][] generatePermutations(int size) {
+        int[][] permutations = new int[config.clusters][size];
+        // start with sequence 0..size-1
+        int[] arr = new int[size];
+        for (int i = 0; i < size; i++) {
+            arr[i] = i;
+        }
+        for (int i = 0; i < permutations.length; i++) {
+            // copy the sequences and Fisher-Yates shuffle
+            int[] a = Arrays.copyOf(arr, arr.length);
+            for (int j = a.length - 1; j > 0; j--) {
+                int idx = rand.nextInt(j + 1);
+                if (idx != j) {
+                    a[idx] ^= a[j];
+                    a[j] ^= a[idx];
+                    a[idx] ^= a[j];
+                }
+            }
+            permutations[i] = a;
+        }
+        return permutations;
+    }
+
+    private int perturbIndex(int idx, int max) {
+        while (true) {
+            double r = rand.nextDouble();
+            if (r < 0.1) {
+                idx = idx == 0 ? max - 1 : idx - 1;
+            } else if (r > 0.9) {
+                idx = (idx + 1) % max;
+            } else {
+                break;
+            }
+        }
+        return idx;
+    }
+
+    private void constructGenerators(List<Pair<Integer, Integer>> ipRanges) {
+        // generate the same number of index permutations of the list of urls
+        // and agents as we want clusters
+        int[][] urlPermutations = generatePermutations(urls.size());
+        int[][] agentPermutations = generatePermutations(agents.size());
+        // crude assumption: segment the IPs into preference groups based
+        // on numerical adjacency
+        int groupSize = Math.max(1, ipRanges.size() / config.clusters);
+        int i = 0;
+        for (int j = 0; j < config.clusters; j++) {
+            for (int k = 0; i < ipRanges.size() && k < groupSize; i++, k++) {
+                Pair<Integer, Integer> range = ipRanges.get(i);
+                // allow for some bleed-through into adjacent preference groups
+                int urlPermutation = j;
+                int agentPermutation = j;
+                if (k != 0) {
+                    urlPermutation = perturbIndex(j, config.clusters);
+                    agentPermutation = perturbIndex(j, config.clusters);
+                }
+                generators.add(new Generator(range.getFirst(), range.getSecond(),
+                        urlPermutations[urlPermutation], agentPermutations[agentPermutation]));
+            }
+        }
     }
 
     public LogGenerator(Config config) throws IOException {
@@ -223,11 +353,13 @@ public class LogGenerator {
         connect(config.servers);
 
         // Load US IPs from the data file
-        loadIpRanges();
+        final List<Pair<Integer, Integer>> ipRanges = loadIpRanges();
         // Load user agent strings
         loadAgents();
         // Load the URLs
         loadUrls();
+
+        constructGenerators(ipRanges);
 
         benchmarkStartTS = System.currentTimeMillis();
         final long endTs = benchmarkStartTS + config.duration * 1000;
@@ -235,15 +367,16 @@ public class LogGenerator {
         schedulePeriodicStats();
 
         while (System.currentTimeMillis() < endTs) {
+            final Sample sample = nextSample();
             client.callProcedure(callback,
                     "NewEvent",
-                    nextIp(),
-                    urls.get(rand.nextInt(urls.size())),
+                    sample.src,
+                    sample.dest,
                     "GET",
                     System.currentTimeMillis() * 1000, // microseconds
                     Math.abs(rand.nextInt()),
-                    rand.nextBoolean() ? "" : urls.get(rand.nextInt(urls.size())),
-                    agents.get(rand.nextInt(agents.size())));
+                    sample.referral,
+                    sample.agent);
         }
 
         timer.cancel();
